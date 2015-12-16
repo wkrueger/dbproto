@@ -43,7 +43,6 @@ var dbprotoNs;
         }
         /**
          * Override to set the upgrade hook.
-         * oldversion is
          */
         dbproto.prototype.upgradeHook = function (e) {
         };
@@ -189,7 +188,7 @@ var dbprotoNs;
             var _this = this;
             if (ignoreError === void 0) { ignoreError = true; }
             return this.load().then(function () {
-                return _this.$q(function (resolve, reject) {
+                return new _this.$q(function (resolve, reject) {
                     if (!inputobj || (inputobj instanceof Array && !inputobj.length)) {
                         resolve(null);
                         return;
@@ -231,20 +230,21 @@ var dbprotoNs;
         };
         dbproto.prototype.load = function () {
             var _this = this;
-            if (dbproto.dbLoading[this.dbname])
-                return dbproto.dbLoading[this.dbname];
-            dbproto.dbLoading[this.dbname] = this.$q(function (resolve, reject) {
+            if (dbproto.dbLoading[this.DBNAME])
+                return dbproto.dbLoading[this.DBNAME];
+            dbproto.dbLoading[this.DBNAME] = new this.$q(function (resolve, reject) {
                 try {
                     if (_this.db) {
                         resolve(_this.db);
                         return;
                     }
                     var idb = (dbproto.useShim) ? shimIndexedDB : indexedDB;
-                    var request = idb.open(_this.dbname, _this.version);
+                    var request = idb.open(_this.DBNAME, _this.VERSION);
                     request.onupgradeneeded = function (e) {
-                        var ne = Object.create(e);
-                        ne.oldversion = (e.oldVersion > 999) ? 0 : Number(e.oldVersion);
-                        _this.upgradeHook(ne);
+                        //var ne:any = Object.create(e);
+                        //safari fix
+                        //ne.oldversion = ( e.oldVersion > 999 ) ? 0 : Number(e.oldVersion)
+                        _this.upgradeHook(e);
                     };
                     request.onsuccess = function (ev) {
                         _this.db = ev.target["result"];
@@ -259,7 +259,7 @@ var dbprotoNs;
                     reject(er);
                 }
             });
-            return dbproto.dbLoading[this.dbname];
+            return dbproto.dbLoading[this.DBNAME];
         };
         dbproto.prototype.clearAll = function (names) {
             var _this = this;
@@ -275,7 +275,7 @@ var dbprotoNs;
                     }
                 }
                 var allp = storenames.map(function (name) {
-                    return _this.$q(function (resolve, reject) {
+                    return new _this.$q(function (resolve, reject) {
                         var transaction = _this.db.transaction(name, "readwrite");
                         var store = transaction.objectStore(name);
                         var req = store.clear();

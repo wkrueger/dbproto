@@ -37,12 +37,6 @@ module dbprotoNs {
 
     }
 
-    export interface JoinedStore {
-
-        joined : {}
-
-    }
-
 
     //partial
     function browserCheck() {
@@ -74,8 +68,6 @@ module dbprotoNs {
      */
     export class dbproto {
 
-        version:number;
-        dbname:string;
         db:IDBDatabase;
         $q:any;
 
@@ -94,7 +86,6 @@ module dbprotoNs {
 
         /**
          * Override to set the upgrade hook.
-         * oldversion is
          */
         upgradeHook(e) {
         }
@@ -291,7 +282,7 @@ module dbprotoNs {
 
             return this.load().then(() => {
 
-                return this.$q((resolve, reject) => {
+                return new this.$q((resolve, reject) => {
 
                     if (!inputobj || (inputobj instanceof Array && !inputobj.length)) {
                         resolve(null);
@@ -354,9 +345,9 @@ module dbprotoNs {
 
         load():Promise<any> {
 
-            if (dbproto.dbLoading[this.dbname]) return dbproto.dbLoading[this.dbname];
+            if (dbproto.dbLoading[this.DBNAME]) return dbproto.dbLoading[this.DBNAME];
 
-            dbproto.dbLoading[this.dbname] = this.$q((resolve, reject) => {
+            dbproto.dbLoading[this.DBNAME] = new this.$q((resolve, reject) => {
 
                 try {
 
@@ -367,14 +358,13 @@ module dbprotoNs {
 
                     var idb = (dbproto.useShim) ? shimIndexedDB : indexedDB;
 
-                    var request = idb.open(this.dbname, this.version);
+                    var request = idb.open(this.DBNAME, this.VERSION);
 
                     request.onupgradeneeded = (e:IDBVersionChangeEvent) => {
-
-                        var ne:any = Object.create(e);
-                        ne.oldversion = ( e.oldVersion > 999 ) ? 0 : Number(e.oldVersion)
-                        this.upgradeHook(ne);
-
+                        //var ne:any = Object.create(e);
+                        //safari fix
+                        //ne.oldversion = ( e.oldVersion > 999 ) ? 0 : Number(e.oldVersion)
+                        this.upgradeHook(e);
                     };
 
                     request.onsuccess = (ev) => {
@@ -400,7 +390,7 @@ module dbprotoNs {
 
             });
 
-            return dbproto.dbLoading[this.dbname];
+            return dbproto.dbLoading[this.DBNAME];
         }
 
         clearAll(names?:string[]):Promise<any> {
@@ -420,7 +410,7 @@ module dbprotoNs {
 
                 var allp = storenames.map(name => {
 
-                    return this.$q((resolve, reject) => {
+                    return new this.$q((resolve, reject) => {
 
                         var transaction = this.db.transaction(name, "readwrite");
                         var store = transaction.objectStore(name);
