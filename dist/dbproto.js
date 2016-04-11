@@ -299,7 +299,7 @@ var dbprotoNs;
         };
         dbproto.dbLoading = {};
         return dbproto;
-    })();
+    }());
     dbprotoNs.dbproto = dbproto;
 })(dbprotoNs || (dbprotoNs = {}));
 var dbproto = dbprotoNs.dbproto;

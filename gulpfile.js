@@ -1,5 +1,6 @@
 var gulp = require('gulp'),
-    plugins = require('gulp-load-plugins')();
+    plugins = require('gulp-load-plugins')(),
+    merge = require('merge2');
 
 gulp.task('build' , () => {
 
@@ -8,7 +9,11 @@ gulp.task('build' , () => {
         declaration : true
     })
 
-    gulp.src('dbproto.ts').pipe(tsStream).pipe(gulp.dest('dist'))
+    gulp.src('dbproto.ts').pipe(tsStream);
+    return merge([
+        tsStream.js.pipe(gulp.dest('dist')) ,
+        tsStream.dts.pipe(gulp.dest('.'))
+        ]);
 
 })
 
