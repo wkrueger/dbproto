@@ -4,17 +4,17 @@ module.exports = function(config) {
     autoWatch: true,
     frameworks: ['mocha'],
     files: [
-      'dist/dbproto.js',
+      '_built2/dbproto.js',
       'node_modules/chai/chai.js',
       'test/*.js'
     ],
     plugins: [
         'karma-coverage',
         'karma-mocha',
-        'karma-chrome-launcher'
+        'karma-firefox-launcher'
     ],
 
-    browsers: ['Chrome'] ,
+    browsers: ['Firefox'] ,
 
     reporters: ['progress'/*, 'coverage'*/],
     //preprocessors: { 'dist/dbproto.js': ['coverage'] },
