@@ -1,3 +1,7 @@
-import clazz = require('./_built2/dbproto.d.ts')
+import clazz = require('./_built2/dbproto')
 
-declare var dbproto : clazz.dbproto
+declare global {
+    declare var dbproto : typeof clazz.dbproto
+}
+
+export = dbproto
