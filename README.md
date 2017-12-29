@@ -14,6 +14,8 @@ db.query('my_store').then( r => console.log(r) )
 
 Currently `dbproto` is defined as a global variable.
 
+(NEW) Now also suports UMD `require('dbproto')`.
+
 ### constructor
 
 	constructor(name:string,version:string,promise?:any)
