@@ -92,7 +92,7 @@ export class dbproto {
     /**
      * Override to set the upgrade hook.
      */
-    upgradeHook(e:IDBVersionChangeEvent) {
+    upgradeHook( e:IDBVersionChangeEvent) {
     }
 
 
