@@ -2,6 +2,10 @@ declare global {
   interface Window {
     shimIndexedDB?: any
   }
+
+  namespace DbProtoTypes {
+    export interface Stores {}
+  }
 }
 
 export type AnyObject = { [k: string]: any }
@@ -62,7 +66,7 @@ function browserCheck() {
  * IndexedDB wrappers
  */
 export class dbproto {
-  db: IDBDatabase
+  db?: IDBDatabase
   $q: typeof Promise
 
   static useShim: boolean
@@ -85,11 +89,14 @@ export class dbproto {
    */
   upgradeHook(e: IDBVersionChangeEvent) {}
 
-  query(objstore: string, queryOptions: DbQueryOptions = {}): Promise<any[]> {
+  query<K extends keyof DbProtoTypes.Stores>(
+    objstore: K,
+    queryOptions: DbQueryOptions = {}
+  ): Promise<DbProtoTypes.Stores[K][]> {
     return this.load().then(() => {
       return new this.$q<any[]>((ok, fail) => {
         var ret: any[] = []
-        var transaction = this.db.transaction(objstore, "readonly")
+        var transaction = this.db!.transaction(objstore, "readonly")
         var store = transaction.objectStore(objstore)
         var index = queryOptions.index ? store.index(queryOptions.index) : store
         var cursor = index.openCursor(queryOptions.keyRange || undefined)
@@ -144,7 +151,7 @@ export class dbproto {
     var alljoins = joinByArr.map(j => {
       if (!j.sourceField) j.sourceField = j.sourceContainer
 
-      var deststore: string = typeof j.destStore == "string" ? j.destStore : j.destStore(srcObject)
+      var deststore = typeof j.destStore == "string" ? j.destStore : j.destStore(srcObject)
       var f
 
       if (j.destIndex) f = this.getByIndex(deststore, j.destIndex, srcObject[j.sourceField])
@@ -167,11 +174,14 @@ export class dbproto {
   /**
    * Queries based on primary key
    */
-  getObject(objstore: string, id: string | number | any[]): Promise<any> {
+  getObject<K extends keyof DbProtoTypes.Stores>(
+    objstore: K,
+    id: string | number | any[]
+  ): Promise<DbProtoTypes.Stores[K] | undefined> {
     var that = this
     return this.load().then(() => {
       return new this.$q((ok, fail) => {
-        var transaction = that.db.transaction(objstore, "readonly")
+        var transaction = that.db!.transaction(objstore, "readonly")
         var store = transaction.objectStore(objstore)
         try {
           var res = store.get(id)
@@ -195,7 +205,7 @@ export class dbproto {
     var that = this
     return this.load().then(() => {
       return new this.$q((resolve, reject) => {
-        var transaction = that.db.transaction(store_name, "readwrite")
+        var transaction = that.db!.transaction(store_name, "readwrite")
         var store = transaction.objectStore(store_name)
         var res = store.delete(key)
         transaction.oncomplete = () => {
@@ -208,11 +218,11 @@ export class dbproto {
     })
   }
 
-  getByIndex(
-    store_name: string,
+  getByIndex<K extends keyof DbProtoTypes.Stores>(
+    store_name: K,
     indexName: string,
     value: IDBKeyRange | string | number | string[] | number[]
-  ): Promise<any[]> {
+  ): Promise<DbProtoTypes.Stores[K][]> {
     if (typeof value == "string" || typeof value == "number") value = IDBKeyRange.only(value)
 
     return this.query(store_name, { index: indexName, keyRange: <IDBKeyRange>value })
@@ -221,7 +231,7 @@ export class dbproto {
   clear(objstore: string): Promise<any> {
     return this.load().then(() => {
       return new this.$q(fulfill => {
-        var transaction = this.db.transaction(objstore, "readwrite")
+        var transaction = this.db!.transaction(objstore, "readwrite")
         transaction.objectStore(objstore).clear()
         transaction.oncomplete = () => {
           fulfill()
@@ -232,10 +242,11 @@ export class dbproto {
 
   /**
    * When inserting sets of data, prefer using one upsert call with array input.
+   * Returns the keypath value from the inserted entry.
    */
-  upsert(
-    storename: string,
-    _inputobj: AnyObject | any[],
+  upsert<K extends keyof DbProtoTypes.Stores>(
+    storename: K,
+    _inputobj: DbProtoTypes.Stores[K] | DbProtoTypes.Stores[K][],
     ignoreError: boolean = true
   ): Promise<any> {
     return this.load().then(() => {
@@ -245,7 +256,7 @@ export class dbproto {
           return
         }
 
-        var transaction = this.db.transaction(storename, "readwrite")
+        var transaction = this.db!.transaction(storename, "readwrite")
         var store = transaction.objectStore(storename)
 
         let treatedInp = _inputobj instanceof Array ? _inputobj : [_inputobj]
@@ -286,7 +297,7 @@ export class dbproto {
 
   static dbLoading: { [k: string]: Promise<IDBDatabase> } = {}
 
-  load(): Promise<any> {
+  load(): Promise<IDBDatabase> {
     if (dbproto.dbLoading[this.DBNAME]) return dbproto.dbLoading[this.DBNAME]
 
     dbproto.dbLoading[this.DBNAME] = new this.$q((resolve, reject) => {
@@ -321,10 +332,10 @@ export class dbproto {
     return dbproto.dbLoading[this.DBNAME]
   }
 
-  clearAll(names?: string[]): Promise<any> {
+  clearAll(names?: string[]): Promise<any[]> {
     return this.load().then(() => {
       //lib.d.ts says domstringlist, so im assuming it doesnt have string prototype
-      var dom_storenames = this.db.objectStoreNames
+      var dom_storenames = this.db!.objectStoreNames
 
       if (names) storenames = names
       else {
@@ -336,7 +347,7 @@ export class dbproto {
 
       var allp = storenames.map(name => {
         return new this.$q((resolve, reject) => {
-          var transaction = this.db.transaction(name, "readwrite")
+          var transaction = this.db!.transaction(name, "readwrite")
           var store = transaction.objectStore(name)
           var req = store.clear()
 

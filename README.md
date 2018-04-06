@@ -5,11 +5,11 @@ Basic IndexedDB wrapper.
 ### init
 
 ```javascript
-var db = new dbproto('database_name',12,$q);
-db.upgradeHook = (event) => {
-	//onupgrade hook goes here
+var db = new dbproto("database_name", 12, $q)
+db.upgradeHook = event => {
+  //onupgrade hook goes here
 }
-db.query('my_store').then( r => console.log(r) )
+db.query("my_store").then(r => console.log(r))
 ```
 
 Currently `dbproto` is defined as a global variable.
@@ -18,7 +18,7 @@ Currently `dbproto` is defined as a global variable.
 
 ### constructor
 
-	constructor(name:string,version:string,promise?:any)
+    constructor(name:string,version:string,promise?:any)
 
 `promise` allows you to pass Angular's `$q` (or any other promise implementation), so that db operations trigger a scope digest.
 
@@ -27,7 +27,7 @@ Currently `dbproto` is defined as a global variable.
 ```typescript
 upgradeHook(event:IDBVersionChangeEvent)
 ```
- 
+
 Wraps [`IDBOpenRequest:onupgradeneeded`](https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onupgradeneeded).
 
 ### query
@@ -37,29 +37,30 @@ query(objstore:string, queryOptions?:DbQueryOptions):Promise<any[]>
 ```
 
 Everything query.
- 
+
 ```typescript
-db.query('object_store').then( r => console.log(r) )
+db.query("object_store").then(r => console.log(r))
 ```
-	 
+
 Gets the whole object store.
 
 OPTIONAL:
 
 ```typescript
 interface DbQueryOptions {
-	//define a function to filter each output
-	filterFunc? : (input:any) => boolean;
-	//use a index
-	index? : string;
-	//use a key range
-	keyRange? : IDBKeyRange;
+  //define a function to filter each output
+  filterFunc?: (input: any) => boolean
+  //use a index
+  index?: string
+  //use a key range
+  keyRange?: IDBKeyRange
 }
 ```
 
 ```typescript
-db.query('object_store' , { index : 'my_index' , keyRange : IDBKeyRange.only(123) })
-	.then( r => console.log(r) )
+db
+  .query("object_store", { index: "my_index", keyRange: IDBKeyRange.only(123) })
+  .then(r => console.log(r))
 ```
 
 ### getObject
@@ -69,7 +70,6 @@ getObject(objstore:string, id:string|number|any[]):Promise<any>
 ```
 
 Gets a single object, based on the primary key (keypath).
-
 
 ### getByIndex
 
@@ -88,7 +88,6 @@ upsert(storename:string, inputobj:any|any[], ignoreError:boolean = true):Promise
 Inserts/replaces objects. `ignoreError` controls whether the whole transaction is aborted
 or if just an error is logged when problems like failed constraints arise.
 
-
 ### deleteObject
 
 ```typescript
@@ -105,7 +104,6 @@ clearAll(storeNames?:string[]):Promise<any>
 
 Clears the selected object stores (all stores on no parameter passed).
 
-
 ### load
 
 ```typescript
@@ -114,13 +112,11 @@ load():Promise<any>
 
 Load is internally called in all the other methods. You don't need to call it.
 
-
 ### deleteDatabase
 
 ```typescript
 deleteDatabase(name:string)
 ```
-
 
 ### augmentJoin
 
@@ -133,22 +129,21 @@ some relational-like structure...
 
 ```typescript
 export interface JoinSpec {
-
-    //the field which will have the queried data injected
-    sourceContainer : string;
-    //the field which data will be passed to the query
-    //if empty, used sourceContainer
-    sourceField? : any;
-    //the store to be queried
-    destStore : string | ((store:any) => string);
-    //the index from the queried store. Gets key path if empty.
-    destIndex? : string;
-    cardinality : Cardinality;
-
+  //the field which will have the queried data injected
+  sourceContainer: string
+  //the field which data will be passed to the query
+  //if empty, used sourceContainer
+  sourceField?: any
+  //the store to be queried
+  destStore: string | ((store: any) => string)
+  //the index from the queried store. Gets key path if empty.
+  destIndex?: string
+  cardinality: Cardinality
 }
 ```
 
 Example
+
 ```
 src = {
 	customerId : 123 ,
@@ -159,8 +154,8 @@ src = {
  db.augmentJoin(src,[
  	{ sourceContainer : 'customer'  , sourceField : 'customerId' ,
  		destStore : 'customer_store' , cardinality : dbproto.Cartinality.ONE } ,
- 	{ sourceContainer : 'phoneNumbers' , sourceField : 'customerId' , 
- 		destStore : 'customer_phone' , destIndex : 'customer_id' , 
+ 	{ sourceContainer : 'phoneNumbers' , sourceField : 'customerId' ,
+ 		destStore : 'customer_phone' , destIndex : 'customer_id' ,
  		cardinality : dbproto.Cardinality.MANY }
  ]).then( ... )
 
@@ -173,7 +168,24 @@ src = {
 }
 ```
 
-## IndexedDbShim
+## (new) Declaring the store types in typescript
+
+You are required to extend the interface `Stores` inside the global scope `DbProtoTypes`.
+
+```typescript
+declare global {
+  namespace DbProtoTypes {
+    export interface Stores {
+      names: { first: string; second: string }
+      cats: { color: string; size: number }
+    }
+  }
+}
+
+const cat = await db.getObject("cats") //will have the cat type inferred
+```
+
+## Browsers with bad indexedDb
 
 We try to use the [indexed DB shim](https://github.com/axemclion/IndexedDBShim)
 when on IOS or safari. It must be previously loaded for that.

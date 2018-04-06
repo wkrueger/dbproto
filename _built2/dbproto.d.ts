@@ -2,6 +2,10 @@ declare global  {
     interface Window {
         shimIndexedDB?: any;
     }
+    namespace DbProtoTypes {
+        interface Stores {
+        }
+    }
 }
 export declare type AnyObject = {
     [k: string]: any;
@@ -29,7 +33,7 @@ export interface JoinSpec {
 export declare class dbproto {
     DBNAME: string;
     VERSION: number;
-    db: IDBDatabase;
+    db?: IDBDatabase;
     $q: typeof Promise;
     static useShim: boolean;
     static Cardinality: typeof Cardinality;
@@ -43,7 +47,7 @@ export declare class dbproto {
      * Override to set the upgrade hook.
      */
     upgradeHook(e: IDBVersionChangeEvent): void;
-    query(objstore: string, queryOptions?: DbQueryOptions): Promise<any[]>;
+    query<K extends keyof DbProtoTypes.Stores>(objstore: K, queryOptions?: DbQueryOptions): Promise<DbProtoTypes.Stores[K][]>;
     _applyFilter(filterArr: any[], object: any): boolean;
     /**
      * Replaces fields in srcObject with queried data.
@@ -53,19 +57,19 @@ export declare class dbproto {
     /**
      * Queries based on primary key
      */
-    getObject(objstore: string, id: string | number | any[]): Promise<any>;
+    getObject<K extends keyof DbProtoTypes.Stores>(objstore: K, id: string | number | any[]): Promise<DbProtoTypes.Stores[K] | undefined>;
     deleteObject(store_name: string, key: number | string | any[]): Promise<any>;
-    getByIndex(store_name: string, indexName: string, value: IDBKeyRange | string | number | string[] | number[]): Promise<any[]>;
+    getByIndex<K extends keyof DbProtoTypes.Stores>(store_name: K, indexName: string, value: IDBKeyRange | string | number | string[] | number[]): Promise<DbProtoTypes.Stores[K][]>;
     clear(objstore: string): Promise<any>;
     /**
      * When inserting sets of data, prefer using one upsert call with array input.
+     * Returns the keypath value from the inserted entry.
      */
-    upsert(storename: string, _inputobj: AnyObject | any[], ignoreError?: boolean): Promise<any>;
+    upsert<K extends keyof DbProtoTypes.Stores>(storename: K, _inputobj: DbProtoTypes.Stores[K] | DbProtoTypes.Stores[K][], ignoreError?: boolean): Promise<any>;
     static dbLoading: {
         [k: string]: Promise<IDBDatabase>;
     };
-    load(): Promise<any>;
-    clearAll(names?: string[]): Promise<any>;
+    load(): Promise<IDBDatabase>;
+    clearAll(names?: string[]): Promise<any[]>;
     deleteDatabase(name: string): void;
 }
-export {};

@@ -133,17 +133,16 @@ var dbproto = /** @class */ (function () {
     /**
      * Override to set the upgrade hook.
      */
-    dbproto.prototype.upgradeHook = function (e) {
-    };
+    dbproto.prototype.upgradeHook = function (e) { };
     dbproto.prototype.query = function (objstore, queryOptions) {
         var _this = this;
         if (queryOptions === void 0) { queryOptions = {}; }
         return this.load().then(function () {
             return new _this.$q(function (ok, fail) {
                 var ret = [];
-                var transaction = _this.db.transaction(objstore, 'readonly');
+                var transaction = _this.db.transaction(objstore, "readonly");
                 var store = transaction.objectStore(objstore);
-                var index = (queryOptions.index) ? store.index(queryOptions.index) : store;
+                var index = queryOptions.index ? store.index(queryOptions.index) : store;
                 var cursor = index.openCursor(queryOptions.keyRange || undefined);
                 cursor.onsuccess = function (e) {
                     var result = e.target.result;
@@ -190,11 +189,11 @@ var dbproto = /** @class */ (function () {
      */
     dbproto.prototype.augmentJoin = function (srcObject, joinBy) {
         var _this = this;
-        var joinByArr = (joinBy instanceof Array) ? joinBy : [joinBy];
+        var joinByArr = joinBy instanceof Array ? joinBy : [joinBy];
         var alljoins = joinByArr.map(function (j) {
             if (!j.sourceField)
                 j.sourceField = j.sourceContainer;
-            var deststore = (typeof j.destStore == "string") ? j.destStore : j.destStore(srcObject);
+            var deststore = typeof j.destStore == "string" ? j.destStore : j.destStore(srcObject);
             var f;
             if (j.destIndex)
                 f = _this.getByIndex(deststore, j.destIndex, srcObject[j.sourceField]);
@@ -204,8 +203,8 @@ var dbproto = /** @class */ (function () {
                 });
             return f.then(function (r) {
                 if (!r)
-                    throw new Error('getAndJoin: item to join not found.');
-                srcObject[j.sourceContainer || j.sourceField] = (j.cardinality == Cardinality.ONE) ? r[0] : r;
+                    throw new Error("getAndJoin: item to join not found.");
+                srcObject[j.sourceContainer || j.sourceField] = j.cardinality == Cardinality.ONE ? r[0] : r;
             });
         });
         return this.$q.all(alljoins).then(function () {
@@ -220,7 +219,7 @@ var dbproto = /** @class */ (function () {
         var that = this;
         return this.load().then(function () {
             return new _this.$q(function (ok, fail) {
-                var transaction = that.db.transaction(objstore, 'readonly');
+                var transaction = that.db.transaction(objstore, "readonly");
                 var store = transaction.objectStore(objstore);
                 try {
                     var res = store.get(id);
@@ -243,7 +242,7 @@ var dbproto = /** @class */ (function () {
         var that = this;
         return this.load().then(function () {
             return new _this.$q(function (resolve, reject) {
-                var transaction = that.db.transaction(store_name, 'readwrite');
+                var transaction = that.db.transaction(store_name, "readwrite");
                 var store = transaction.objectStore(store_name);
                 var res = store.delete(key);
                 transaction.oncomplete = function () {
@@ -274,6 +273,7 @@ var dbproto = /** @class */ (function () {
     };
     /**
      * When inserting sets of data, prefer using one upsert call with array input.
+     * Returns the keypath value from the inserted entry.
      */
     dbproto.prototype.upsert = function (storename, _inputobj, ignoreError) {
         var _this = this;
@@ -294,7 +294,7 @@ var dbproto = /** @class */ (function () {
                         out[idx] = ev.target.result;
                     };
                     req.onerror = function (ev) {
-                        console.debug('upsert error', JSON.stringify(o));
+                        console.debug("upsert error", JSON.stringify(o));
                         if (ignoreError) {
                             ev.preventDefault();
                         }
@@ -328,7 +328,7 @@ var dbproto = /** @class */ (function () {
                     resolve(_this.db);
                     return;
                 }
-                var idb = (dbproto.useShim) ? window.shimIndexedDB : indexedDB;
+                var idb = dbproto.useShim ? window.shimIndexedDB : indexedDB;
                 var request = idb.open(_this.DBNAME, _this.VERSION);
                 request.onupgradeneeded = function (e) {
                     //var ne:any = Object.create(e);
@@ -384,7 +384,7 @@ var dbproto = /** @class */ (function () {
         });
     };
     dbproto.prototype.deleteDatabase = function (name) {
-        var idb = (dbproto.useShim) ? window.shimIndexedDB : indexedDB;
+        var idb = dbproto.useShim ? window.shimIndexedDB : indexedDB;
         idb.deleteDatabase(name);
     };
     dbproto.Cardinality = Cardinality;
