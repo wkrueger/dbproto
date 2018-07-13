@@ -1,17 +1,17 @@
-const build = require('buildscript-utils')
+const build = require("@proerd/buildscript")
 
 const tasks = {
-    async bundle() {
-        await build.spawn('./node_modules/.bin/webpack')
-    },
+  async bundle() {
+    await build.spawn("./node_modules/.bin/webpack")
+  },
 
-    test() {
-        const Server = require('karma').Server
-        new Server({
-            configFile: __dirname + '/karma.conf.js',
-            singleRun: true
-        }).start()
-    }
+  test() {
+    const Server = require("karma").Server
+    new Server({
+      configFile: __dirname + "/karma.conf.js",
+      singleRun: true,
+    }).start()
+  },
 }
 
 build.runTask(tasks)
